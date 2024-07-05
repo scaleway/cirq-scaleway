@@ -15,24 +15,14 @@
 import io
 from setuptools import find_packages, setup
 
-# This reads the __version__ variable from cirq/_version.py
-exec(open("cirq_scaleway/versions.py").read())
-
 name = "cirq-scaleway"
-
 description = "A Cirq package to simulate and connect to Scaleway Quantum as a Service"
-
-# README file as long_description.
 long_description = io.open("README.rst", encoding="utf-8").read()
-
-# Read in requirements
 requirements = open("requirements.txt").readlines()
 requirements = [r.strip() for r in requirements]
-
 cirq_packages = ["cirq_scaleway"] + [
     "cirq_scaleway." + package for package in find_packages(where="cirq_scaleway")
 ]
-
 requirements += [f"cirq-core==1.3.0"]
 
 setup(
