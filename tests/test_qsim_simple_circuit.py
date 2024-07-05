@@ -11,7 +11,7 @@ def test_qsim_simple_circuit():
         url=os.environ["CIRQ_SCALEWAY_API_URL"],
     )
 
-    qsim_simulator = service.device(device="qsim_simulation_c32m256")
+    qsim_simulator = service.device(name="qsim_simulation_c32m256")
 
     assert qsim_simulator is not None
 
