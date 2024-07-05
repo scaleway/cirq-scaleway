@@ -47,12 +47,12 @@ In the most simple way, here the code to use **cirq-scaleway**:
 >>> qsim_simulator = service.device(device="qsim_simulation_c64m512")
 
 >>> # Create a device session and run a circuit against it
->>> with qsim_simulator.create_session():
+>>> with qsim_simulator.create_session() as session:
 >>>   qubit = cirq.GridQubit(0, 0)
 >>>   circuit = cirq.Circuit(cirq.X(qubit) ** 0.5, cirq.measure(qubit, key='m'))
 
 >>>   # Run the circuit on the device
->>>   result = sampler.run(circuit)
+>>>   result = session.run(circuit)
 >>>   print(result)
 
 Reach us
