@@ -21,7 +21,9 @@ To get started with Scaleway Quantum as a Service (QaaS), checkout the following
 Installation
 ------------
 
-To install the stable version of only **cirq-scaleway**, use `pip install cirq-scaleway`.
+To install the stable version of only **cirq-scaleway**:
+
+>>> pip install cirq-scaleway
 
 Note, that this will install both **cirq-scaleway** and **cirq-core**.
 
