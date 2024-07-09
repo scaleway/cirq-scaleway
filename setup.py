@@ -27,7 +27,7 @@ requirements += [f"cirq-core==1.3.0"]
 
 setup(
     name=name,
-    version="0.1.1",
+    version="0.1.2",
     url="http://github.com/scaleway/cirq-scaleway",
     author="The Scaleway Developers",
     author_email="community@scaleway.com",
