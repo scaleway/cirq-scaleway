@@ -3,8 +3,6 @@
 `cirq-scaleway` is Apache 2.0 licensed and accepts contributions via GitHub.
 This document will cover how to contribute to the project and report issues.
 
-<p align="center"><img width="50%" src="docs/static_files/sdk-artwork.png" /></p>
-
 ## Topics
 
 - [Reporting Security Issues](#reporting-security-issues)
@@ -56,7 +54,7 @@ To submit code:
 - Push your commit(s) to your topic branch on your fork
 - Open a pull request against `cirq-scaleway` master branch that follows [PR guidelines](#pull-request-guidelines)
 
-The [maintainers](MAINTAINERS.md) of `cirq-scaleway` use a "Let's Get This Merged" (LGTM) message in the pull request to note that the commits are ready to merge.
+The maintainers of `cirq-scaleway` use a "Let's Get This Merged" (LGTM) message in the pull request to note that the commits are ready to merge.
 After one or more maintainer states LGTM, we will merge.
 If you have questions or comments on your code, feel free to correct these in your branch through new commits.
 
@@ -79,7 +77,5 @@ by GitHub on the pull request page.
 Keep in mind only the **Pull Request Title** will be used as commit message as we stash all commits on merge.
 
 ## Community guidelines
-
-See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 Thank you for reading through all of this, if you have any question feel free to [reach us](README.md#reach-us)!
