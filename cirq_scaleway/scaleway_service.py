@@ -100,14 +100,14 @@ class ScalewayQuantumService:
         json_resp = self.__client.list_platforms(name)
 
         for platform_dict in json_resp["platforms"]:
-            name = platform_dict.get("name")
+            backend_name = platform_dict.get("backend_name")
 
-            if name.startswith("qsim"):
+            if backend_name == "qsim":
                 scaleway_platforms.append(
                     ScalewayDevice(
                         client=self.__client,
                         id=platform_dict.get("id"),
-                        name=name,
+                        name=platform_dict.get("name"),
                         version=platform_dict.get("version"),
                         num_qubits=platform_dict.get("max_qubit_count"),
                         metadata=platform_dict.get("metadata", None),
