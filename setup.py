@@ -27,10 +27,10 @@ requirements += [f"cirq-core==1.3.0"]
 
 setup(
     name=name,
-    version="0.1.3",
+    version="0.1.4",
     url="http://github.com/scaleway/cirq-scaleway",
     author="The Scaleway Developers",
-    author_email="community@scaleway.com",
+    author_email="vmacheret@scaleway.com",
     python_requires=(">=3.10.0"),
     install_requires=requirements,
     license="Apache 2",
