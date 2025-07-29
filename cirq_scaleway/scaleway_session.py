@@ -113,7 +113,7 @@ class ScalewaySession(cirq.work.Sampler):
             raise Exception("session already started")
 
         self.__id = self.__client.create_session(
-            self.__name,
+            name=self.__name,
             platform_id=self.__device.id,
             deduplication_id=self.__deduplication_id,
             max_duration=self.__max_duration,
@@ -190,11 +190,11 @@ class ScalewaySession(cirq.work.Sampler):
 
         return trial_results
 
-    def _extract_payload_from_response(self, result_response: Dict) -> str:
-        result = result_response.get("result", None)
+    def _extract_payload_from_response(self, job_result: QaaSJobResult) -> str:
+        result = job_result.result
 
         if result is None or result == "":
-            url = result_response.get("url", None)
+            url = job_result.url
 
             if url is not None:
                 resp = httpx.get(url)
@@ -227,7 +227,7 @@ class ScalewaySession(cirq.work.Sampler):
             if job.status in ["error", "unknown_status"]:
                 raise Exception("Job error")
 
-    def _to_cirq_result(self, job_results: List) -> cirq.Result:
+    def _to_cirq_result(self, job_results: List[QaaSJobResult]) -> cirq.Result:
         if len(job_results) == 0:
             raise Exception("Empty result list")
 
@@ -238,7 +238,7 @@ class ScalewaySession(cirq.work.Sampler):
         return cirq_result
 
     def _submit(self, run_opts: QaaSJobRunData, session_id: str) -> cirq.study.Result:
-        job_payload = QaaSJobData.schema().dumps(
+        data = QaaSJobData.schema().dumps(
             QaaSJobData(
                 backend=QaaSJobBackendData(
                     name=self.__device.name, version=self.__device.version, options={}
@@ -248,9 +248,7 @@ class ScalewaySession(cirq.work.Sampler):
             )
         )
 
-        job_id = self.__client.create_job(
-            session_id=session_id, circuits=job_payload
-        ).id
+        job_id = self.__client.create_job(session_id=session_id, payload=data).id
 
         job_results = self._wait_for_result(job_id, 60 * 10, 2)
         result = self._to_cirq_result(job_results)

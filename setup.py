@@ -15,27 +15,25 @@
 import io
 from setuptools import find_packages, setup
 
-name = "cirq-scaleway"
-description = "A Cirq package to simulate and connect to Scaleway Quantum as a Service"
+description = "A Cirq package to connect to Scaleway Quantum as a Service"
 long_description = io.open("README.rst", encoding="utf-8").read()
 requirements = open("requirements.txt").readlines()
 requirements = [r.strip() for r in requirements]
-cirq_packages = ["cirq_scaleway"] + [
-    "cirq_scaleway." + package for package in find_packages(where="cirq_scaleway")
-]
-requirements += [f"cirq-core==1.3.0"]
 
 setup(
-    name=name,
+    name="cirq_scaleway",
     version="0.1.4",
-    url="http://github.com/scaleway/cirq-scaleway",
+    project_urls={
+        "Documentation": "https://www.scaleway.com/en/quantum-as-a-service/",
+        "Source": "https://github.com/scaleway/cirq-scaleway",
+        "Tracker": "https://github.com/scaleway/cirq-scaleway/issues",
+    },
     author="The Scaleway Developers",
     author_email="vmacheret@scaleway.com",
-    python_requires=(">=3.10.0"),
+    packages=find_packages(),
     install_requires=requirements,
+    python_requires=(">=3.10.0"),
     license="Apache 2",
     description=description,
     long_description=long_description,
-    packages=cirq_packages,
-    package_data={"cirq_scaleway": ["py.typed"], "cirq_scaleway.json_test_data": ["*"]},
 )
