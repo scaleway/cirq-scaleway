@@ -16,7 +16,7 @@ import json
 import cirq
 import httpx
 
-from typing import Union, Optional, Dict, List
+from typing import Union, Optional, List
 
 from cirq.study import ResultDict
 
