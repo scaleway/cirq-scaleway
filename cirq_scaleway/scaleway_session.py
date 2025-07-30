@@ -15,21 +15,22 @@ import time
 import json
 import cirq
 import httpx
-import randomname
+
+from typing import Union, Optional, List
 
 from cirq.study import ResultDict
-from typing import Union, Optional, Dict, List
-from pytimeparse.timeparse import timeparse
 
-from .scaleway_client import QaaSClient
-from .scaleway_models import (
-    JobPayload,
-    ClientPayload,
-    BackendPayload,
-    RunPayload,
-    SerializationType,
-    CircuitPayload,
+from scaleway_qaas_client import (
+    QaaSClient,
+    QaaSJobResult,
+    QaaSJobData,
+    QaaSJobClientData,
+    QaaSCircuitData,
+    QaaSJobRunData,
+    QaaSJobBackendData,
+    QaaSCircuitSerializationFormat,
 )
+
 from .versions import USER_AGENT
 
 
@@ -48,13 +49,6 @@ class ScalewaySession(cirq.work.Sampler):
         self.__client = client
         self.__name = name
         self.__deduplication_id = deduplication_id
-
-        if isinstance(max_duration, str):
-            max_duration = f"{timeparse(max_duration)}s"
-
-        if isinstance(max_idle_duration, str):
-            max_idle_duration = f"{timeparse(max_idle_duration)}s"
-
         self.__max_duration = max_duration
         self.__max_idle_duration = max_idle_duration
 
@@ -77,11 +71,11 @@ class ScalewaySession(cirq.work.Sampler):
             str: the current status of the session. Can be either: starting, runnng, stopping, stopped
         """
         if not self.__id:
-            raise "created"
+            return "unknown_status"
 
-        dict = self.__client.get_session(session_id=self.__id)
+        session = self.__client.get_session(session_id=self.__id)
 
-        return dict.get("status", "unknown_status")
+        return session.status
 
     @property
     def id(self) -> str:
@@ -119,12 +113,12 @@ class ScalewaySession(cirq.work.Sampler):
             raise Exception("session already started")
 
         self.__id = self.__client.create_session(
-            self.__name,
+            name=self.__name,
             platform_id=self.__device.id,
             deduplication_id=self.__deduplication_id,
             max_duration=self.__max_duration,
             max_idle_duration=self.__max_idle_duration,
-        )
+        ).id
 
         return self
 
@@ -181,11 +175,11 @@ class ScalewaySession(cirq.work.Sampler):
             circuit = cirq.protocols.resolve_parameters(program, param_resolver)
             serialized_circuit = cirq.to_json(circuit)
 
-            run_opts = RunPayload(
+            run_opts = QaaSJobRunData(
                 options={"shots": repetitions},
                 circuits=[
-                    CircuitPayload(
-                        serialization_type=SerializationType.JSON,
+                    QaaSCircuitData(
+                        serialization_format=QaaSCircuitSerializationFormat.JSON,
                         circuit_serialization=serialized_circuit,
                     )
                 ],
@@ -196,11 +190,11 @@ class ScalewaySession(cirq.work.Sampler):
 
         return trial_results
 
-    def _extract_payload_from_response(self, result_response: Dict) -> str:
-        result = result_response.get("result", None)
+    def _extract_payload_from_response(self, job_result: QaaSJobResult) -> str:
+        result = job_result.result
 
         if result is None or result == "":
-            url = result_response.get("url", None)
+            url = job_result.url
 
             if url is not None:
                 resp = httpx.get(url)
@@ -214,7 +208,7 @@ class ScalewaySession(cirq.work.Sampler):
 
     def _wait_for_result(
         self, job_id: str, timeout: Optional[int] = None, fetch_interval: int = 2
-    ) -> Dict | None:
+    ) -> List[QaaSJobResult] | None:
         start_time = time.time()
 
         while True:
@@ -227,13 +221,13 @@ class ScalewaySession(cirq.work.Sampler):
 
             job = self.__client.get_job(job_id)
 
-            if job["status"] == "completed":
-                return self.__client.get_job_results(job_id)
+            if job.status == "completed":
+                return self.__client.list_job_results(job_id)
 
-            if job["status"] in ["error", "unknown_status"]:
+            if job.status in ["error", "unknown_status"]:
                 raise Exception("Job error")
 
-    def _to_cirq_result(self, job_results: List) -> cirq.Result:
+    def _to_cirq_result(self, job_results: List[QaaSJobResult]) -> cirq.Result:
         if len(job_results) == 0:
             raise Exception("Empty result list")
 
@@ -243,20 +237,18 @@ class ScalewaySession(cirq.work.Sampler):
 
         return cirq_result
 
-    def _submit(self, run_opts: RunPayload, session_id: str) -> cirq.study.Result:
-        backend_opts = BackendPayload(
-            name=self.__device.name, version=self.__device.version, options={}
+    def _submit(self, run_opts: QaaSJobRunData, session_id: str) -> cirq.study.Result:
+        data = QaaSJobData.schema().dumps(
+            QaaSJobData(
+                backend=QaaSJobBackendData(
+                    name=self.__device.name, version=self.__device.version, options={}
+                ),
+                client=QaaSJobClientData(user_agent=USER_AGENT),
+                run=run_opts,
+            )
         )
 
-        client_opts = ClientPayload(user_agent=USER_AGENT)
-
-        job_payload = JobPayload.schema().dumps(
-            JobPayload(backend=backend_opts, run=run_opts, client=client_opts)
-        )
-
-        job_id = self.__client.create_job(
-            name=randomname.get_name(), session_id=session_id, circuits=job_payload
-        )
+        job_id = self.__client.create_job(session_id=session_id, payload=data).id
 
         job_results = self._wait_for_result(job_id, 60 * 10, 2)
         result = self._to_cirq_result(job_results)

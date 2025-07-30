@@ -1,13 +1,14 @@
 import os
 
 import cirq
+
 from cirq_scaleway import ScalewayQuantumService
 
 
 def test_qsim_simple_circuit():
     service = ScalewayQuantumService(
         project_id=os.environ["CIRQ_SCALEWAY_PROJECT_ID"],
-        secret_key=os.environ["CIRQ_SCALEWAY_API_TOKEN"],
+        secret_key=os.environ["CIRQ_SCALEWAY_SECRET_KEY"],
         url=os.environ["CIRQ_SCALEWAY_API_URL"],
     )
 

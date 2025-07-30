@@ -14,13 +14,10 @@
 import os
 
 from typing import Optional, List, Dict
-from dotenv import dotenv_values
+
+from scaleway_qaas_client import QaaSClient
 
 from .scaleway_device import ScalewayDevice
-from .scaleway_client import QaaSClient
-
-
-_ENDPOINT_URL = "https://api.scaleway.com/qaas/v1alpha1"
 
 
 class ScalewayQuantumService:
@@ -39,27 +36,19 @@ class ScalewayQuantumService:
         Returns:
             ScalewayDevice: The device that match the given name. None if no match.
         """
-        env_token = dotenv_values().get("CIRQ_SCALEWAY_API_TOKEN") or os.getenv(
-            "CIRQ_SCALEWAY_API_TOKEN"
-        )
-        env_project_id = dotenv_values().get("CIRQ_SCALEWAY_PROJECT_ID") or os.getenv(
-            "CIRQ_SCALEWAY_PROJECT_ID"
-        )
-        env_api_url = dotenv_values().get("CIRQ_SCALEWAY_API_URL") or os.getenv(
-            "CIRQ_SCALEWAY_API_URL"
-        )
+        secret_key = secret_key or os.getenv("CIRQ_SCALEWAY_SECRET_KEY")
+        project_id = project_id or os.getenv("CIRQ_SCALEWAY_PROJECT_ID")
+        url = url or os.getenv("CIRQ_SCALEWAY_API_URL")
 
-        token = secret_key or env_token
-        if token is None:
+        if secret_key is None:
             raise Exception("secret_key is missing")
 
-        project_id = project_id or env_project_id
         if project_id is None:
             raise Exception("project_id is missing")
 
-        api_url = url or env_api_url or _ENDPOINT_URL
-
-        self.__client = QaaSClient(url=api_url, token=token, project_id=project_id)
+        self.__client = QaaSClient(
+            url=url, secret_key=secret_key, project_id=project_id
+        )
 
     def device(self, name: str) -> ScalewayDevice:
         """Returns a device matching the specified name.
@@ -97,20 +86,16 @@ class ScalewayQuantumService:
         if kwargs.get("min_num_qubits") is not None:
             filters["min_num_qubits"] = kwargs.pop("min_num_qubits", None)
 
-        json_resp = self.__client.list_platforms(name)
+        platforms = self.__client.list_platforms(name)
 
-        for platform_dict in json_resp["platforms"]:
-            backend_name = platform_dict.get("backend_name")
+        for platform in platforms:
+            backend_name = platform.backend_name
 
             if backend_name == "qsim":
                 scaleway_platforms.append(
                     ScalewayDevice(
                         client=self.__client,
-                        id=platform_dict.get("id"),
-                        name=platform_dict.get("name"),
-                        version=platform_dict.get("version"),
-                        num_qubits=platform_dict.get("max_qubit_count"),
-                        metadata=platform_dict.get("metadata", None),
+                        platform=platform,
                     )
                 )
 

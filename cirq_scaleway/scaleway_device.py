@@ -15,26 +15,20 @@ import cirq
 
 from typing import Union, Optional
 
+from scaleway_qaas_client import QaaSClient, QaaSPlatform
+
 from .scaleway_session import ScalewaySession
-from .scaleway_client import QaaSClient
 
 
 class ScalewayDevice(cirq.devices.Device):
     def __init__(
         self,
         client: QaaSClient,
-        id: str,
-        name: str,
-        version: str,
-        num_qubits: int,
-        metadata: Optional[str],
+        platform: QaaSPlatform,
     ) -> None:
         self.__id = id
         self.__client = client
-        self.__version = version
-        self.__num_qubits = num_qubits
-        self.__name = name
-        self.__metadata = metadata
+        self.__platform = platform
 
     def __repr__(self) -> str:
         return f"<ScalewayDevice(name={self.__name},num_qubits={self.__num_qubits},platform_id={self.id})>"
@@ -46,7 +40,7 @@ class ScalewayDevice(cirq.devices.Device):
         Returns:
             str: The UUID of the platform.
         """
-        return self.__id
+        return self.__platform.id
 
     @property
     def availability(self) -> str:
@@ -55,9 +49,9 @@ class ScalewayDevice(cirq.devices.Device):
         Returns:
             str: the current availability statys of the session. Can be either: available, shortage or scarce
         """
-        resp = self.__client.get_platform(self.__id)
+        platform = self.__client.get_platform(self.__platform.id)
 
-        return resp.get("availability")
+        return platform.availability
 
     @property
     def name(self) -> str:
@@ -66,7 +60,7 @@ class ScalewayDevice(cirq.devices.Device):
         Returns:
             str: the name of the platform.
         """
-        return self.__name
+        return self.__platform.name
 
     @property
     def num_qubits(self) -> int:
@@ -76,7 +70,7 @@ class ScalewayDevice(cirq.devices.Device):
         Returns:
             int: the estimated amount of maximum number of runnable qubits.
         """
-        return self.__num_qubits
+        return self.__platform.max_qubit_count
 
     @property
     def version(self):
@@ -85,13 +79,13 @@ class ScalewayDevice(cirq.devices.Device):
         Returns:
             str: the platform's version.
         """
-        return self.__version
+        return self.__platform.version
 
     def create_session(
         self,
         name: Optional[str] = "qsim-session-from-cirq",
         deduplication_id: Optional[str] = "qsim-session-from-cirq",
-        max_duration: Union[int, str] = "1h",
+        max_duration: Union[int, str] = "59m",
         max_idle_duration: Union[int, str] = "20m",
     ) -> ScalewaySession:
         """Create a new device session to run job against.
