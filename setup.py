@@ -19,6 +19,7 @@ description = "A Cirq package to connect to Scaleway Quantum as a Service"
 long_description = io.open("README.rst", encoding="utf-8").read()
 requirements = open("requirements.txt").readlines()
 requirements = [r.strip() for r in requirements]
+requirements += [f"cirq-core==1.3.0"]
 
 setup(
     name="cirq_scaleway",

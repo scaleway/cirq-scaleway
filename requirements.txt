@@ -1,2 +1,1 @@
 scaleway-qaas-client==0.1.12
-cirq-core==1.3.0
