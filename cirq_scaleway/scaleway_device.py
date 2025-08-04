@@ -15,7 +15,7 @@ import cirq
 
 from typing import Union, Optional
 
-from scaleway_qaas_client import QaaSClient, QaaSPlatform
+from scaleway_qaas_client.v1alpha1 import QaaSClient, QaaSPlatform
 
 from .scaleway_session import ScalewaySession
 

@@ -20,7 +20,7 @@ from typing import Union, Optional, List
 
 from cirq.study import ResultDict
 
-from scaleway_qaas_client import (
+from scaleway_qaas_client.v1alpha1 import (
     QaaSClient,
     QaaSJobResult,
     QaaSJobData,

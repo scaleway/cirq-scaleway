@@ -15,7 +15,7 @@ import os
 
 from typing import Optional, List, Dict
 
-from scaleway_qaas_client import QaaSClient
+from scaleway_qaas_client.v1alpha1 import QaaSClient
 
 from .scaleway_device import ScalewayDevice
 
