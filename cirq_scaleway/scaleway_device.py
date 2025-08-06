@@ -26,7 +26,6 @@ class ScalewayDevice(cirq.devices.Device):
         client: QaaSClient,
         platform: QaaSPlatform,
     ) -> None:
-        self.__id = id
         self.__client = client
         self.__platform = platform
 
