@@ -85,7 +85,7 @@ class ScalewayDevice(cirq.devices.Device):
         name: Optional[str] = "qsim-session-from-cirq",
         deduplication_id: Optional[str] = "qsim-session-from-cirq",
         max_duration: Union[int, str] = "59m",
-        max_idle_duration: Union[int, str] = "20m",
+        max_idle_duration: Union[int, str] = "59m",
     ) -> ScalewaySession:
         """Create a new device session to run job against.
 

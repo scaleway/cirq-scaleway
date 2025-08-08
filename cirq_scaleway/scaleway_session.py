@@ -248,7 +248,14 @@ class ScalewaySession(cirq.work.Sampler):
             )
         )
 
-        job_id = self.__client.create_job(session_id=session_id, payload=data).id
+        model = self.__client.create_model(
+            payload=data,
+        )
+
+        if not model:
+            raise RuntimeError("Failed to push circuit data")
+
+        job_id = self.__client.create_job(session_id=session_id, model_id=model.id).id
 
         job_results = self._wait_for_result(job_id, 60 * 10, 2)
         result = self._to_cirq_result(job_results)
