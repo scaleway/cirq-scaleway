@@ -231,18 +231,18 @@ class ScalewaySession(cirq.work.Sampler):
             user_agent=USER_AGENT,
         )
 
-        computation_model_dict = QuantumComputationModel(
+        computation_model_json = QuantumComputationModel(
             programs=[program],
             backend=backend_data,
             client=client_data,
-        ).to_dict()
+        ).to_json_str()
 
-        computation_parameters_dict = QuantumComputationParameters(
+        computation_parameters_json = QuantumComputationParameters(
             shots=shots,
-        ).to_dict()
+        ).to_json_str()
 
         model = self.__client.create_model(
-            payload=computation_model_dict,
+            payload=computation_model_json,
         )
 
         if not model:
@@ -251,7 +251,7 @@ class ScalewaySession(cirq.work.Sampler):
         job_id = self.__client.create_job(
             session_id=session_id,
             model_id=model.id,
-            parameters=computation_parameters_dict,
+            parameters=computation_parameters_json,
         ).id
 
         job_results = self._wait_for_result(job_id, 60 * 100, 2)
