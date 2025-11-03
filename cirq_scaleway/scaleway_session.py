@@ -12,26 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import time
-import json
 import cirq
 import httpx
 
 from typing import Union, Optional, List
 
-from cirq.study import ResultDict
+from qio.core import (
+    QuantumProgram,
+    QuantumProgramResult,
+    QuantumComputationModel,
+    QuantumComputationParameters,
+    BackendData,
+    ClientData,
+)
 
 from scaleway_qaas_client.v1alpha1 import (
     QaaSClient,
     QaaSJobResult,
-    QaaSJobData,
-    QaaSJobClientData,
-    QaaSCircuitData,
-    QaaSJobRunData,
-    QaaSJobBackendData,
-    QaaSCircuitSerializationFormat,
 )
 
-from .versions import USER_AGENT
+from qiskit_scaleway.versions import USER_AGENT
 
 
 class ScalewaySession(cirq.work.Sampler):
@@ -173,24 +173,17 @@ class ScalewaySession(cirq.work.Sampler):
 
         for param_resolver in cirq.study.to_resolvers(params):
             circuit = cirq.protocols.resolve_parameters(program, param_resolver)
-            serialized_circuit = cirq.to_json(circuit)
 
-            run_opts = QaaSJobRunData(
-                options={"shots": repetitions},
-                circuits=[
-                    QaaSCircuitData(
-                        serialization_format=QaaSCircuitSerializationFormat.JSON,
-                        circuit_serialization=serialized_circuit,
-                    )
-                ],
-            )
+            program = QuantumProgram.from_cirq_circuit(circuit)
 
-            results = self._submit(run_opts, self.__id)
+            results = self._submit(program, repetitions, self.__id)
             trial_results.append(results)
 
         return trial_results
 
-    def _extract_payload_from_response(self, job_result: QaaSJobResult) -> str:
+    def _extract_payload_from_response(
+        self, job_result: QaaSJobResult
+    ) -> QuantumProgramResult:
         result = job_result.result
 
         if result is None or result == "":
@@ -199,12 +192,11 @@ class ScalewaySession(cirq.work.Sampler):
             if url is not None:
                 resp = httpx.get(url)
                 resp.raise_for_status()
-
-                return resp.text
+                result = resp.text
             else:
-                raise Exception("Got result with both empty data and url fields")
-        else:
-            return result
+                raise RuntimeError("Got result with empty data and url fields")
+
+        return QuantumProgramResult.from_json_str(result)
 
     def _wait_for_result(
         self, job_id: str, timeout: Optional[int] = None, fetch_interval: int = 2
@@ -227,37 +219,46 @@ class ScalewaySession(cirq.work.Sampler):
             if job.status in ["error", "unknown_status"]:
                 raise Exception("Job error")
 
-    def _to_cirq_result(self, job_results: List[QaaSJobResult]) -> cirq.Result:
-        if len(job_results) == 0:
-            raise Exception("Empty result list")
-
-        payload = self._extract_payload_from_response(job_results[0])
-        payload_dict = json.loads(payload)
-        cirq_result = ResultDict._from_json_dict_(**payload_dict)
-
-        return cirq_result
-
-    def _submit(self, run_opts: QaaSJobRunData, session_id: str) -> cirq.study.Result:
-        data = QaaSJobData.schema().dumps(
-            QaaSJobData(
-                backend=QaaSJobBackendData(
-                    name=self.__device.name, version=self.__device.version, options={}
-                ),
-                client=QaaSJobClientData(user_agent=USER_AGENT),
-                run=run_opts,
-            )
+    def _submit(
+        self, program: QuantumProgram, shots: int, session_id: str
+    ) -> cirq.study.Result:
+        backend_data = BackendData(
+            name=self.__device.name,
+            version=self.__device.version,
         )
 
+        client_data = ClientData(
+            user_agent=USER_AGENT,
+        )
+
+        computation_model_dict = QuantumComputationModel(
+            programs=[program],
+            backend=backend_data,
+            client=client_data,
+        ).to_dict()
+
+        computation_parameters_dict = QuantumComputationParameters(
+            shots=shots,
+        ).to_dict()
+
         model = self.__client.create_model(
-            payload=data,
+            payload=computation_model_dict,
         )
 
         if not model:
             raise RuntimeError("Failed to push circuit data")
 
-        job_id = self.__client.create_job(session_id=session_id, model_id=model.id).id
+        job_id = self.__client.create_job(
+            session_id=session_id,
+            model_id=model.id,
+            parameters=computation_parameters_dict,
+        ).id
 
-        job_results = self._wait_for_result(job_id, 60 * 10, 2)
-        result = self._to_cirq_result(job_results)
+        job_results = self._wait_for_result(job_id, 60 * 100, 2)
+
+        if len(job_results) != 1:
+            raise Exception("Expected a single result for Cirq job")
+
+        result = self._extract_payload_from_response(job_results[0]).to_cirq_result()
 
         return result
