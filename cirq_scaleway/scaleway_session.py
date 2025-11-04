@@ -19,6 +19,7 @@ from typing import Union, Optional, List
 
 from qio.core import (
     QuantumProgram,
+    QuantumProgramSerializationFormat,
     QuantumProgramResult,
     QuantumComputationModel,
     QuantumComputationParameters,
@@ -174,7 +175,9 @@ class ScalewaySession(cirq.work.Sampler):
         for param_resolver in cirq.study.to_resolvers(params):
             circuit = cirq.protocols.resolve_parameters(program, param_resolver)
 
-            program = QuantumProgram.from_cirq_circuit(circuit)
+            program = QuantumProgram.from_cirq_circuit(
+                circuit, QuantumProgramSerializationFormat.CIRQ_CIRCUIT_JSON_V1
+            )
 
             results = self._submit(program, repetitions, self.__id)
             trial_results.append(results)
@@ -209,7 +212,7 @@ class ScalewaySession(cirq.work.Sampler):
             elapsed = time.time() - start_time
 
             if timeout is not None and elapsed >= timeout:
-                raise Exception("Timed out waiting for result")
+                raise RuntimeError("Timed out waiting for result")
 
             job = self.__client.get_job(job_id)
 
@@ -217,7 +220,7 @@ class ScalewaySession(cirq.work.Sampler):
                 return self.__client.list_job_results(job_id)
 
             if job.status in ["error", "unknown_status"]:
-                raise Exception("Job error")
+                raise RuntimeError(f"Job failed: {job.progress_message}")
 
     def _submit(
         self, program: QuantumProgram, shots: int, session_id: str
@@ -257,7 +260,7 @@ class ScalewaySession(cirq.work.Sampler):
         job_results = self._wait_for_result(job_id, 60 * 100, 2)
 
         if len(job_results) != 1:
-            raise Exception("Expected a single result for Cirq job")
+            raise RuntimeError("Expected a single result for Cirq job")
 
         result = self._extract_payload_from_response(job_results[0]).to_cirq_result()
 
