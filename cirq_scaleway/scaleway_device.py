@@ -17,7 +17,7 @@ from typing import Union, Optional
 
 from scaleway_qaas_client.v1alpha1 import QaaSClient, QaaSPlatform
 
-from .scaleway_session import ScalewaySession
+from cirq_scaleway.scaleway_session import ScalewaySession
 
 
 class ScalewayDevice(cirq.devices.Device):
