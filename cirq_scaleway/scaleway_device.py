@@ -30,7 +30,7 @@ class ScalewayDevice(cirq.devices.Device):
         self.__platform = platform
 
     def __repr__(self) -> str:
-          return f"<ScalewayDevice(name={self.name},num_qubits={self.num_qubits},platform_id={self.id})>"
+        return f"<ScalewayDevice(name={self.name},num_qubits={self.num_qubits},platform_id={self.id})>"
 
     @property
     def id(self) -> str:
