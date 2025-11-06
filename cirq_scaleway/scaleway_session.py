@@ -32,7 +32,7 @@ from scaleway_qaas_client.v1alpha1 import (
     QaaSJobResult,
 )
 
-from qiskit_scaleway.versions import USER_AGENT
+from cirq_scaleway.versions import USER_AGENT
 
 
 class ScalewaySession(cirq.work.Sampler):
