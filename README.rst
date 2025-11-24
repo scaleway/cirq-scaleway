@@ -46,7 +46,7 @@ In the most simple way, here the code to use **cirq-scaleway**:
 >>> print(devices)
 
 >>> # Get a specific device by its name
->>> qsim_simulator = service.device(name="qsim_simulation_c64m512")
+>>> qsim_simulator = service.device(name="EMU-QSIM-H100")
 
 >>> # Create a device session and run a circuit against it
 >>> with qsim_simulator.create_session() as session:
