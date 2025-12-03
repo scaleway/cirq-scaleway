@@ -35,6 +35,10 @@ from scaleway_qaas_client.v1alpha1 import (
 from cirq_scaleway.versions import USER_AGENT
 
 
+_DEFAULT_FETCH_INTERVAL = 2  # in second
+_DEFAULT_TIMEOUT = 60 * 360  # in second
+
+
 class ScalewaySession(cirq.work.Sampler):
     def __init__(
         self,
@@ -202,7 +206,10 @@ class ScalewaySession(cirq.work.Sampler):
         return QuantumProgramResult.from_json_str(result)
 
     def _wait_for_result(
-        self, job_id: str, timeout: Optional[int] = None, fetch_interval: int = 2
+        self,
+        job_id: str,
+        fetch_interval: int,
+        timeout: Optional[int] = None,
     ) -> List[QaaSJobResult] | None:
         start_time = time.time()
 
@@ -257,7 +264,9 @@ class ScalewaySession(cirq.work.Sampler):
             parameters=computation_parameters_json,
         ).id
 
-        job_results = self._wait_for_result(job_id, 60 * 100, 2)
+        job_results = self._wait_for_result(
+            job_id, _DEFAULT_FETCH_INTERVAL, _DEFAULT_TIMEOUT
+        )
 
         if len(job_results) != 1:
             raise RuntimeError("Expected a single result for Cirq job")
