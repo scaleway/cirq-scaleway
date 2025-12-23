@@ -176,14 +176,18 @@ class ScalewaySession(cirq.work.Sampler):
         if not self.__id:
             raise Exception("session not started")
 
+        # Keep Cirq format by default for qsim backends
+        default_format = (
+            QuantumProgramSerializationFormat.CIRQ_CIRCUIT_JSON_V1
+            if "qsim" in self.__device.name.lower()
+            else QuantumProgramSerializationFormat.QASM_V3
+        )
+
         for param_resolver in cirq.study.to_resolvers(params):
             circuit = cirq.protocols.resolve_parameters(program, param_resolver)
+            program = QuantumProgram.from_cirq_circuit(circuit, default_format)
 
-            program = QuantumProgram.from_cirq_circuit(
-                circuit, QuantumProgramSerializationFormat.CIRQ_CIRCUIT_JSON_V1
-            )
-
-            results = self._submit(program, repetitions, self.__id)
+            results = self._submit(program, repetitions, self.__id, params)
             trial_results.append(results)
 
         return trial_results
@@ -230,7 +234,7 @@ class ScalewaySession(cirq.work.Sampler):
                 raise RuntimeError(f"Job failed: {job.progress_message}")
 
     def _submit(
-        self, program: QuantumProgram, shots: int, session_id: str
+        self, program: QuantumProgram, shots: int, session_id: str, params
     ) -> cirq.study.Result:
         backend_data = BackendData(
             name=self.__device.name,
@@ -271,6 +275,8 @@ class ScalewaySession(cirq.work.Sampler):
         if len(job_results) != 1:
             raise RuntimeError("Expected a single result for Cirq job")
 
-        result = self._extract_payload_from_response(job_results[0]).to_cirq_result()
+        result = self._extract_payload_from_response(job_results[0]).to_cirq_result(
+            params=params
+        )
 
         return result

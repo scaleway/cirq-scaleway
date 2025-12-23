@@ -83,7 +83,7 @@ class ScalewayDevice(cirq.devices.Device):
     def create_session(
         self,
         name: Optional[str] = "qsim-session-from-cirq",
-        deduplication_id: Optional[str] = "qsim-session-from-cirq",
+        deduplication_id: Optional[str] = None,
         max_duration: Union[int, str] = "59m",
         max_idle_duration: Union[int, str] = "59m",
     ) -> ScalewaySession:
