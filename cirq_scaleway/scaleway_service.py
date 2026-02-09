@@ -90,7 +90,8 @@ class ScalewayQuantumService:
 
         for platform in platforms:
             if platform.backend_name in ["qsim", "aer"] or platform.provider_name in [
-                "aqt"
+                "aqt",
+                "iqm",
             ]:
                 scaleway_platforms.append(
                     ScalewayDevice(
