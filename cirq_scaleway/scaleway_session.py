@@ -177,11 +177,12 @@ class ScalewaySession(cirq.work.Sampler):
             raise Exception("session not started")
 
         # Keep Cirq format by default for qsim backends
-        default_format = (
-            QuantumProgramSerializationFormat.CIRQ_CIRCUIT_JSON_V1
-            if "qsim" in self.__device.name.lower()
-            else QuantumProgramSerializationFormat.QASM_V3
-        )
+        if "qsim" in self.__device.name.lower():
+            default_format = QuantumProgramSerializationFormat.CIRQ_CIRCUIT_JSON_V1
+        elif "quantanium" in self.__device.name.lower():
+            default_format = QuantumProgramSerializationFormat.QASM_V2
+        else:
+            default_format = QuantumProgramSerializationFormat.QASM_V3
 
         for param_resolver in cirq.study.to_resolvers(params):
             circuit = cirq.protocols.resolve_parameters(program, param_resolver)
@@ -275,8 +276,10 @@ class ScalewaySession(cirq.work.Sampler):
         if len(job_results) != 1:
             raise RuntimeError("Expected a single result for Cirq job")
 
-        result = self._extract_payload_from_response(job_results[0]).to_cirq_result(
-            params=params
-        )
+        kwargs = {}
+        if params is not None:
+            kwargs["params"] = params
+
+        result = self._extract_payload_from_response(job_results[0]).to_cirq_result(**kwargs)
 
         return result
