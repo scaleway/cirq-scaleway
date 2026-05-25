@@ -89,9 +89,10 @@ class ScalewayQuantumService:
         platforms = self.__client.list_platforms(name)
 
         for platform in platforms:
-            if platform.backend_name in ["qsim", "aer"] or platform.provider_name in [
+            if platform.backend_name in ["qsim", "aer", "quantanium"] or platform.provider_name.lower() in [
                 "aqt",
                 "iqm",
+                "qperfect",
             ]:
                 scaleway_platforms.append(
                     ScalewayDevice(
